@@ -19,7 +19,6 @@ Laboratorio de programación concurrente: condiciones de carrera, sincronizació
 - [Parte I - PrimeFinder](#parte-i---primefinder-con-waitnotify)
 - [Parte II - Snake Race](#parte-ii---snake-race)
 - [Ejecución](#ejecución)
-- [Resultados](#resultados)
 
 ---
 
@@ -240,7 +239,7 @@ mvn -q exec:java -Dsnakes=20
 
 ---
 
-## 👥 Autores
+## Autores
 
 **Escuela Colombiana de Ingeniería Julio Garavito**  
 - Arquitecturas de Software (ARSW)
