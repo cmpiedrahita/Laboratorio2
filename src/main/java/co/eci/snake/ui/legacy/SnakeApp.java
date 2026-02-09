@@ -5,6 +5,7 @@ import co.eci.snake.core.Board;
 import co.eci.snake.core.Direction;
 import co.eci.snake.core.Position;
 import co.eci.snake.core.Snake;
+import co.eci.snake.core.SnakeStats;
 import co.eci.snake.core.engine.GameClock;
 
 import javax.swing.*;
@@ -21,6 +22,7 @@ public final class SnakeApp extends JFrame {
   private final JButton actionButton;
   private final GameClock clock;
   private final java.util.List<Snake> snakes = new java.util.ArrayList<>();
+  private final java.util.List<SnakeStats> snakeStats = new java.util.ArrayList<>();
 
   public SnakeApp() {
     super("The Snake Race");
@@ -31,7 +33,9 @@ public final class SnakeApp extends JFrame {
       int x = 2 + (i * 3) % board.width();
       int y = 2 + (i * 2) % board.height();
       var dir = Direction.values()[i % Direction.values().length];
-      snakes.add(Snake.of(x, y, dir));
+      var snake = Snake.of(x, y, dir);
+      snakes.add(snake);
+      snakeStats.add(new SnakeStats(i, snake));
     }
 
     this.gamePanel = new GamePanel(board, () -> snakes);
@@ -48,7 +52,9 @@ public final class SnakeApp extends JFrame {
     this.clock = new GameClock(60, () -> SwingUtilities.invokeLater(gamePanel::repaint));
 
     var exec = Executors.newVirtualThreadPerTaskExecutor();
-    snakes.forEach(s -> exec.submit(new SnakeRunner(s, board)));
+    for (int i = 0; i < snakes.size(); i++) {
+      exec.submit(new SnakeRunner(snakes.get(i), board, clock, snakeStats.get(i)));
+    }
 
     actionButton.addActionListener((ActionEvent e) -> togglePause());
 
@@ -132,10 +138,35 @@ public final class SnakeApp extends JFrame {
     if ("Action".equals(actionButton.getText())) {
       actionButton.setText("Resume");
       clock.pause();
+      showStats();
     } else {
       actionButton.setText("Action");
       clock.resume();
     }
+  }
+
+  private void showStats() {
+    var longest = snakeStats.stream()
+        .max((a, b) -> Integer.compare(a.getLength(), b.getLength()))
+        .orElse(null);
+    
+    var firstDead = snakeStats.stream()
+        .filter(s -> !s.isAlive())
+        .min((a, b) -> Long.compare(a.getDeathTime(), b.getDeathTime()))
+        .orElse(null);
+    
+    StringBuilder msg = new StringBuilder("=== ESTADÍSTICAS ===\n");
+    if (longest != null) {
+      msg.append("Serpiente más larga: #").append(longest.getId())
+         .append(" (longitud: ").append(longest.getLength()).append(")\n");
+    }
+    if (firstDead != null) {
+      msg.append("Primera en morir: #").append(firstDead.getId());
+    } else {
+      msg.append("Todas las serpientes siguen vivas");
+    }
+    
+    System.out.println(msg);
   }
 
   public static final class GamePanel extends JPanel {
